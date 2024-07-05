@@ -5,9 +5,119 @@
 
 pthread_t thread1, thread2, thread3;
 
+volatile int limit = 40;
+
+struct node_stack{
+    struct node* head;
+    int size_limit;
+    int size;
+
+};
+
+struct node{
+    struct node* next;
+    int value;
+
+};
 
 void *thread_printer(void* ptr);
+void *thread_producer(void* ptr);
+void *thread_consumer(void* ptr);
 
+
+struct node_stack* stack_loader(){
+    
+    struct node_stack* stack = malloc(sizeof(struct node_stack));
+    
+    stack->head = malloc(sizeof(struct node));
+    stack->size = 20;
+    stack->size_limit = 40;
+
+    struct node* head;
+    head = stack->head;
+    //todo error check
+    
+    head->value = 20;
+
+    struct node* curs1;
+    curs1 = head;
+
+    for(int i = 1; i<20; i++){
+        curs1->next = malloc(sizeof(struct node));
+        //todo error check
+        curs1->next->value = 20-i;
+        curs1 = curs1->next;
+    }
+
+    return stack;
+}
+
+void stack_printer(struct node_stack* stack){
+
+    struct node* head = stack->head;
+    printf("Limit is size %d\n", stack->size_limit);
+    printf("Stack is size %d\n", stack->size);
+    if(head==NULL){
+        return;
+    }
+
+
+    while(1){
+        if(head==NULL){
+            return;
+        }else{
+            printf("id -> %d\n",head->value);
+            head=head->next;
+        }
+    }
+}
+
+void remove_node(struct node_stack* stack){
+
+    if(stack == NULL || stack->head == NULL){
+        printf("error removing node...\n");
+        return;
+    }
+
+    if(stack->size==1){
+        printf("value %d removed from stack.\n", stack->head->value);
+        free(stack->head);
+        stack->head = NULL;
+        stack->size -= 1;
+        return;
+    }
+
+    //rebase
+    struct node* curs = NULL;
+    curs = stack->head;
+    printf("value %d removed from stack.\n", stack->head->value);
+    stack->head = stack->head->next;
+    free(curs);
+    stack->size -= 1;
+    
+
+    return;
+}
+
+
+void add_node(struct node_stack* stack, int value){
+    if(stack==NULL){
+        printf("error - null passed to stack_printer\n");
+        return;
+    }
+
+    if(stack->size >= stack->size_limit){
+        printf("error - stack size has hit limit. Disregarding add_node with value %d\n",value);
+        return;
+    }
+    
+    struct node* new_node = malloc(sizeof(struct node));
+    new_node->value = value;
+    new_node->next = stack->head;
+    stack->size += 1;
+    stack->head = new_node;
+    return;
+}
 
 
 int main(int argc, char** argv){
@@ -28,6 +138,26 @@ int main(int argc, char** argv){
     pthread_join(thread1, NULL);
     pthread_join(thread2, NULL);
     pthread_join(thread3, NULL);
+
+    // stack init and print
+    struct node_stack* stack = stack_loader(); 
+    stack_printer(stack);
+
+    int vals = 21;
+    while(1){
+        add_node(stack, vals);
+        vals++;
+        if(vals>41){
+            break;
+        }
+    }
+
+    for(int i = 0;i<45;i++){
+        remove_node(stack);
+    }
+
+    stack_printer(stack);
+
 
     return 0;
 }
