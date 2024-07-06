@@ -174,11 +174,15 @@ void *thread_producer(void* args){
         }
 
         int value = rand() % 20;
+        sem_wait(&sem1);
         if(stack->size >= stack->size_limit){
             printf("error - stack size has hit limit. Disregarding add_node with value %d\n",value);
             return NULL;
         }
-
+        if(stack->size == 0){
+            printf("error - stack size has hit zero. Disregarding add_node with value %d\n",value);
+            return NULL;
+        }
 
         struct node* new_node = malloc(sizeof(struct node));
 
@@ -186,7 +190,6 @@ void *thread_producer(void* args){
         new_node->value = value;
         
         printf("Adding %d to stack\n",new_node->value);
-        sem_wait(&sem1);
         
         new_node->next = stack->head;
         stack->size += 1;
@@ -226,12 +229,12 @@ int main(int argc, char** argv){
 
     //thret1 = pthread_create(&thread1, NULL, thread_printer, (void*)message1);
     //thret2 = pthread_create(&thread2, NULL, thread_printer, (void*)message2);
-    thret3 = pthread_create(&thread3, NULL, thread_printer, (void*)message3);
+    //thret3 = pthread_create(&thread3, NULL, thread_printer, (void*)message3);
 
     // in between
     //pthread_join(thread1, NULL);
     //pthread_join(thread2, NULL);
-    pthread_join(thread3, NULL);
+    //pthread_join(thread3, NULL);
 
     // stack init and print
     struct node_stack* stack = stack_loader(); 
